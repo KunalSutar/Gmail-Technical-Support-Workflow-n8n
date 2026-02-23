@@ -1,0 +1,516 @@
+{
+  "name": "Customer Support Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -752,
+        -256
+      ],
+      "id": "623e72f9-f759-4d87-9dc8-0cd76054ebcd",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z2nthtggiOnlJbb9",
+          "name": "kunalksutar@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Customer Support ",
+              "description": "Texts where the user asks questions about Visual Studio Code, including reporting technical problems, troubleshooting errors, fixing installation or performance issues, configuring settings, or understanding how specific VS Code features work. This category also includes general FAQ-style inquiries about VS Code capabilities, limitations, or expected behavior, even when no error is reported.  Examples  “VS Code shows [Unsupported] in the title bar after installation. How do I restore a supported setup?”  “Can VS Code be launched without GPU acceleration if it opens with a blank window?”"
+            },
+            {
+              "category": "Other ",
+              "description": "Texts that are not focused on resolving a technical issue. This includes general questions, conceptual explanations, planning, writing requests, opinions, or casual discussion without any system failure or debugging context.  Example  “What is the difference between tokenization and vector embeddings in simple terms?”"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -464,
+        -256
+      ],
+      "id": "58faff2f-d826-4c74-b3cd-243c5265ad2f",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -32
+      ],
+      "id": "6a5383cb-c058-4b7f-a793-ab3b197e168f",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Gmail Trigger').item.json.text }}",
+        "options": {
+          "systemMessage": "You are a technical support assistant responsible for generating clear, accurate email replies to user queries related to Visual Studio Code.\nYou have access to a Knowledge Base tool backed by a vector database containing official Visual Studio Code FAQs, troubleshooting guides, and documentation.\n\nInstructions:\n1. Always pass the user’s query as the `input` field when calling the Knowledge Base tool.\n2. Use the Knowledge Base tool to retrieve relevant Visual Studio Code information before responding.\n3. Base your response strictly on the retrieved content; do not guess or add external knowledge.\n4. Write a clear, professional technical support email specific to Visual Studio Code.\n5. Do not include explanations, reasoning steps, or system details.\n\nOutput:\nOutput only the email content.\nUse proper email formatting (greeting, body, closing).\nDo not add headings, metadata, or any extra text outside the email.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        48,
+        -384
+      ],
+      "id": "7369f7f0-5755-4ec1-99d0-5a554e326227",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        608,
+        -256
+      ],
+      "id": "bfe38452-22cf-41e1-987f-8f734bdca8c1",
+      "name": "Reply to a message",
+      "webhookId": "54bd6198-80ce-473d-838b-13e517b177e8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z2nthtggiOnlJbb9",
+          "name": "kunalksutar@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        -16
+      ],
+      "id": "c1338e4c-0897-417e-a89c-e70292c0bc40",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "OxNJcx3RBlc5cjds",
+          "name": "Local-ROG-G17"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:7b"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "65ede7dd-14c7-4010-895a-9ec5801c88ae",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "OxNJcx3RBlc5cjds",
+          "name": "Local-ROG-G17"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1wW8zwcJsQLdRyo-M4Or2TZzkmOyrC66H",
+          "mode": "list",
+          "cachedResultName": "FAQ",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1wW8zwcJsQLdRyo-M4Or2TZzkmOyrC66H"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        0
+      ],
+      "id": "028390f8-60d9-40b0-9e1e-c17db9c1d090",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "f38eMrgXGj6TSbtY",
+          "name": "kunalksutar@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1072,
+        0
+      ],
+      "id": "c633fb19-33dd-485d-8255-880186ac2c24",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "f38eMrgXGj6TSbtY",
+          "name": "kunalksutar@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        208
+      ],
+      "id": "1f01faa0-36fa-4611-8d74-1725b999b3fe",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 900,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        368
+      ],
+      "id": "1565a580-cedb-4724-a530-f3d97e2f4a6b",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -192
+      ],
+      "id": "5efd0588-eb77-4208-8cb7-696fb4d3bc4e",
+      "name": "Ollama Chat Model1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "OxNJcx3RBlc5cjds",
+          "name": "Local-ROG-G17"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:7b"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        208
+      ],
+      "id": "320ddc76-acb8-454b-adf6-4a8ce1a7803f",
+      "name": "Embeddings Ollama1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "OxNJcx3RBlc5cjds",
+          "name": "Local-ROG-G17"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "example_kb",
+          "mode": "list",
+          "cachedResultName": "example_kb"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        -880,
+        0
+      ],
+      "id": "c98de543-d4c8-4308-bb31-d3fd303adb30",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "mkNcxuj6HlEdBqHV",
+          "name": "kunalksutar@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Queries a Qdrant vector database of Visual Studio Code support documentation and FAQs.\nThe AI must infer and supply the semantic search query via the `input` parameter using $fromAI before responding.",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "example_kb",
+          "mode": "list",
+          "cachedResultName": "example_kb"
+        },
+        "topK": 1,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        -192
+      ],
+      "id": "9549d5b2-f2e0-4890-9c09-a9cdf481eb77",
+      "name": "Qdrant Vector Store1",
+      "credentials": {
+        "qdrantApi": {
+          "id": "mkNcxuj6HlEdBqHV",
+          "name": "kunalksutar@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.text }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        64,
+        -192
+      ],
+      "id": "b3e1fd11-ca63-42ab-bc59-5184a3b9251a",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "28f6e49c-2621-46c0-a42b-d05d6ffd36cb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b299d5b643cf5ec943a414a25f28335ab2b1cf2188b414a1da2876c0e7ebb4eb"
+  },
+  "id": "1Y7p4yyzaHTvFCCOEdIoo",
+  "tags": []
+}
