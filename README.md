@@ -5,6 +5,7 @@ This project implements an Agentic AI workflow designed to automate responses to
 The goal is to eliminate repetitive manual responses to common technical queries. Instead of a human repeatedly referring to documentation and drafting responses, this workflow intelligently detects relevant emails, retrieves accurate context from documentation, generates a response, and replies automatically — significantly improving efficiency.
 
 The entire system runs locally using the n8n self-hosted AI starter kit to avoid API rate limits and maintain full control over the pipeline.
+<img width="1553" height="792" alt="image" src="https://github.com/user-attachments/assets/a1eb2199-850e-4e85-ac52-8444bcb92e61" />
 
 # Workflow Design
 
@@ -50,7 +51,7 @@ Workflow Engine: n8n (self-hosted)
 
 Vector Database: Qdrant
 
-Models Used:
+## Models Used:
 
 Qwen2.5-7B – used for chunking, retrieval, and text classification
 
